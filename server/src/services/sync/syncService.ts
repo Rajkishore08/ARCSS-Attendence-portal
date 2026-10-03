@@ -16,17 +16,24 @@ export class SyncService {
     }
 
     if (!this.initialSyncPromise) {
-      console.log('🔄 First request received on cold start: syncing live data from Google Sheets...');
-      this.initialSyncPromise = this.syncAll().then(res => {
-        console.log('✅ Cold start sync completed.');
-        return res;
-      }).catch(err => {
-        console.error('❌ Cold start sync error:', err);
-        this.initialSyncPromise = null;
-      });
+      console.log('🔄 First request received on cold start: syncing live data from Google Sheets in parallel...');
+      this.initialSyncPromise = this.syncAll()
+        .then(res => {
+          console.log('✅ Cold start parallel sync completed.');
+          return res;
+        })
+        .catch(err => {
+          console.error('❌ Cold start sync error:', err);
+          this.initialSyncPromise = null;
+          return { success: false, error: err.message };
+        });
     }
 
-    await this.initialSyncPromise;
+    // Safety timeout: don't block request for more than 6s
+    await Promise.race([
+      this.initialSyncPromise,
+      new Promise(resolve => setTimeout(resolve, 6000)),
+    ]);
   }
 
   initAutoSync() {
@@ -48,18 +55,18 @@ export class SyncService {
     }
 
     this.isSyncing = true;
-    const results = [];
 
     try {
       const branches = db.prepare('SELECT * FROM branches WHERE active = 1').all() as any[];
-      for (const branch of branches) {
-        try {
-          const result = await this.syncBranch(branch.id);
-          results.push(result);
-        } catch (err: any) {
-          results.push({ branchId: branch.id, error: err.message });
-        }
-      }
+      const results = await Promise.all(
+        branches.map(async branch => {
+          try {
+            return await this.syncBranch(branch.id);
+          } catch (err: any) {
+            return { branchId: branch.id, error: err.message };
+          }
+        })
+      );
       return { success: true, results };
     } finally {
       this.isSyncing = false;
