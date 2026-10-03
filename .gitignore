@@ -1,0 +1,32 @@
+# Node dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+client/dist/
+server/dist/
+dist/
+.vercel/
+
+# Local SQLite databases & logs
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+*.log
+
+# Sensitive Google Service Account credentials & .env
+# (These should be added to Vercel Environment Variables, not committed to public GitHub)
+.env
+.env.local
+.env.production
+service-account.json
+server/service-account.json
+credentials.json
+server/credentials.json
+
+# OS files
+.DS_Store
+Thumbs.db
