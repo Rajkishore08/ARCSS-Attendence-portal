@@ -16,34 +16,41 @@ export interface DatabaseInterface {
 
 let databaseInstance: DatabaseInterface;
 
-// Try to load native better-sqlite3 if available in local environment,
-// otherwise seamlessly fall back to high-performance zero-dependency in-memory relational store for Vercel Serverless
+declare const __non_webpack_require__: any;
+
 try {
-  if (process.env.VERCEL !== '1') {
-    const BetterSqlite3 = require('better-sqlite3');
-    const dbPath = path.isAbsolute(config.databaseUrl)
-      ? config.databaseUrl
-      : path.resolve(process.cwd(), config.databaseUrl);
-
-    const dir = path.dirname(dbPath);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-
-    const nativeDb = new BetterSqlite3(dbPath);
+  if (process.env.VERCEL !== '1' && !process.env.AWS_LAMBDA_FUNCTION_NAME && !process.env.LAMBDA_TASK_ROOT) {
     try {
-      nativeDb.pragma('journal_mode = WAL');
-      nativeDb.pragma('foreign_keys = ON');
-    } catch {}
+      const modName = ['better', 'sqlite3'].join('-');
+      const safeReq = typeof __non_webpack_require__ !== 'undefined' ? __non_webpack_require__ : require;
+      const BetterSqlite3 = safeReq(modName);
+      const dbPath = path.isAbsolute(config.databaseUrl)
+        ? config.databaseUrl
+        : path.resolve(process.cwd(), config.databaseUrl);
 
-    databaseInstance = nativeDb;
-    console.log(`📦 Database loaded via native SQLite file: ${dbPath}`);
+      const dir = path.dirname(dbPath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+
+      const nativeDb = new BetterSqlite3(dbPath);
+      try {
+        nativeDb.pragma('journal_mode = WAL');
+        nativeDb.pragma('foreign_keys = ON');
+      } catch {}
+
+      databaseInstance = nativeDb;
+      console.log(`📦 Database loaded via native SQLite file: ${dbPath}`);
+    } catch (err: any) {
+      console.warn(`⚠️ Native SQLite driver not available (${err.message}). Using resilient memory database.`);
+      databaseInstance = new MemoryDatabase();
+    }
   } else {
     databaseInstance = new MemoryDatabase();
     console.log('⚡ Database loaded via MemoryDatabase (Serverless Optimized)');
   }
 } catch (err: any) {
-  console.warn(`⚠️ Better-sqlite3 native driver not available (${err.message}). Using resilient memory database.`);
+  console.warn(`⚠️ Database fallback to MemoryDatabase: ${err.message}`);
   databaseInstance = new MemoryDatabase();
 }
 
