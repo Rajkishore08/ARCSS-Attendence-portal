@@ -12,10 +12,10 @@ app.use(express.json());
 
 // Initialize Database & seed tables if required
 initDatabase();
-syncService.initAutoSync();
 
-// Register API Routes
-app.use('/api', apiRoutes);
+if (!process.env.VERCEL && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
+  syncService.initAutoSync();
+}
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -26,6 +26,19 @@ app.get('/health', (req, res) => {
     mode: config.useMockData ? 'mock' : 'live_google_sheets',
   });
 });
+
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    service: 'ARCS Attendance Backend',
+    timestamp: new Date().toISOString(),
+    mode: config.useMockData ? 'mock' : 'live_google_sheets',
+  });
+});
+
+// Register API Routes on both /api and root (to support direct function invocations and rewrites)
+app.use('/api', apiRoutes);
+app.use('/', apiRoutes);
 
 // Global error handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
