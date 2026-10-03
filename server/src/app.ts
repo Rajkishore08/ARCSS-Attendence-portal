@@ -12,7 +12,16 @@ app.use(express.json());
 // Initialize Database & seed tables if required
 initDatabase();
 
-// Health check endpoint
+// Health check endpoints (including root '/' for Vercel service probe)
+app.get('/', (req, res) => {
+  res.json({
+    status: 'ok',
+    service: 'ARCS Attendance Backend',
+    timestamp: new Date().toISOString(),
+    mode: config.useMockData ? 'mock' : 'live_google_sheets',
+  });
+});
+
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
