@@ -48,6 +48,19 @@ app.get('/api/health', (req, res) => {
 
 
 
+// Ensure Google Sheets live data is pulled before querying routes
+app.use(async (req, res, next) => {
+  if (req.path === '/' || req.path === '/health' || req.path === '/api/health') {
+    return next();
+  }
+  try {
+    await syncService.ensureSynced();
+  } catch (err: any) {
+    console.error('Error during on-demand sync:', err);
+  }
+  next();
+});
+
 // Register API Routes on both /api and root (to support direct function invocations and rewrites)
 app.use('/api', apiRoutes);
 app.use('/', apiRoutes);

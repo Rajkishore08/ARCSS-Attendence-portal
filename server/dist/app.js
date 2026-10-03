@@ -45,6 +45,19 @@ app.get('/api/health', (req, res) => {
         mode: index_1.config.useMockData ? 'mock' : 'live_google_sheets',
     });
 });
+// Ensure Google Sheets live data is pulled before querying routes
+app.use(async (req, res, next) => {
+    if (req.path === '/' || req.path === '/health' || req.path === '/api/health') {
+        return next();
+    }
+    try {
+        await syncService_1.syncService.ensureSynced();
+    }
+    catch (err) {
+        console.error('Error during on-demand sync:', err);
+    }
+    next();
+});
 // Register API Routes on both /api and root (to support direct function invocations and rewrites)
 app.use('/api', api_1.default);
 app.use('/', api_1.default);

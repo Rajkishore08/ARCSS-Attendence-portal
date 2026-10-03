@@ -23504,53 +23504,6 @@ var MemoryDatabase = class {
     for (const emp of realEmployees) {
       this.employees.set(emp.id, emp);
     }
-    const allDates = [];
-    for (let d = 1; d <= 30; d++) allDates.push(`2026-09-${String(d).padStart(2, "0")}`);
-    for (let d = 1; d <= 31; d++) allDates.push(`2026-10-${String(d).padStart(2, "0")}`);
-    for (const emp of realEmployees) {
-      for (const date of allDates) {
-        const [y, m, da] = date.split("-").map(Number);
-        const dayOfWeek = new Date(y, m - 1, da).getDay();
-        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-        const isHoliday = date === "2026-09-04" || date === "2026-10-02";
-        const isFuture = date > "2026-10-03";
-        let mPresent = false;
-        let ePresent = false;
-        if (!isWeekend && !isHoliday && !isFuture) {
-          const hash = (emp.id.length * 37 + da * 19 + (m === 9 ? 11 : 23)) % 100;
-          mPresent = hash < 88;
-          ePresent = hash < 84;
-          if (date === "2026-10-03") {
-            mPresent = true;
-            ePresent = emp.id.includes("raj_kishore");
-          }
-        }
-        const mRecId = `${emp.id}_${date}_morning`;
-        this.attendanceRecords.set(mRecId, {
-          id: mRecId,
-          employee_id: emp.id,
-          branch_id: emp.branch_id,
-          date,
-          session: "morning",
-          present: mPresent ? 1 : 0,
-          entry_time: mPresent ? "09:30 AM" : null,
-          source_spreadsheet_id: config.branches.find((b) => b.id === emp.branch_id)?.spreadsheetId,
-          updated_at: (/* @__PURE__ */ new Date()).toISOString()
-        });
-        const eRecId = `${emp.id}_${date}_evening`;
-        this.attendanceRecords.set(eRecId, {
-          id: eRecId,
-          employee_id: emp.id,
-          branch_id: emp.branch_id,
-          date,
-          session: "evening",
-          present: ePresent ? 1 : 0,
-          entry_time: ePresent ? "05:30 PM" : null,
-          source_spreadsheet_id: config.branches.find((b) => b.id === emp.branch_id)?.spreadsheetId,
-          updated_at: (/* @__PURE__ */ new Date()).toISOString()
-        });
-      }
-    }
   }
   exec(sql) {
   }
@@ -26210,6 +26163,17 @@ app.get("/api/health", (req, res) => {
     timestamp: (/* @__PURE__ */ new Date()).toISOString(),
     mode: config.useMockData ? "mock" : "live_google_sheets"
   });
+});
+app.use(async (req, res, next) => {
+  if (req.path === "/" || req.path === "/health" || req.path === "/api/health") {
+    return next();
+  }
+  try {
+    await syncService.ensureSynced();
+  } catch (err) {
+    console.error("Error during on-demand sync:", err);
+  }
+  next();
 });
 app.use("/api", api_default);
 app.use("/", api_default);
