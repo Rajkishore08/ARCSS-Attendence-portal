@@ -2,7 +2,6 @@ import express from 'express';
 import cors from 'cors';
 import { config } from './config/index';
 import { initDatabase } from './database/db';
-import { syncService } from './services/sync/syncService';
 import apiRoutes from './routes/api';
 
 const app = express();
@@ -12,10 +11,6 @@ app.use(express.json());
 
 // Initialize Database & seed tables if required
 initDatabase();
-
-if (!process.env.VERCEL && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
-  syncService.initAutoSync();
-}
 
 // Health check endpoint
 app.get('/health', (req, res) => {
