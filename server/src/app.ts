@@ -46,3 +46,10 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 
 export default app;
 export { app };
+
+// Support direct CommonJS require in Vercel Express service loader
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = app;
+  (module.exports as any).default = app;
+  (module.exports as any).app = app;
+}
