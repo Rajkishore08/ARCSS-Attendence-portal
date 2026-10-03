@@ -49,11 +49,9 @@ const privateKey = (fileCredentials?.private_key || process.env.GOOGLE_PRIVATE_K
 const apiKey = process.env.GOOGLE_API_KEY || '';
 const projectId = fileCredentials?.project_id || process.env.GOOGLE_PROJECT_ID || DEFAULT_SERVICE_ACCOUNT.project_id;
 
-// If credentials exist, allow live sync unless explicitly set to mock
-const hasCredentials = Boolean(serviceAccountEmail && privateKey) || Boolean(apiKey);
-const useMockData = process.env.USE_MOCK_DATA !== undefined
-  ? process.env.USE_MOCK_DATA === 'true'
-  : !hasCredentials;
+// Live Google Sheets mode unconditionally enabled
+const hasCredentials = true;
+const useMockData = false;
 
 const isVercel = process.env.VERCEL === '1';
 const rootDir = fs.existsSync(path.resolve(process.cwd(), 'client')) 
