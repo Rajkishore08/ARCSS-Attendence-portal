@@ -46,18 +46,7 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Auto-sync middleware: ensures Google Sheets data is pulled before responding
-app.use(async (req, res, next) => {
-  if (req.path === '/' || req.path === '/health' || req.path === '/api/health') {
-    return next();
-  }
-  try {
-    await syncService.ensureSynced();
-  } catch (err: any) {
-    console.error('Error during on-demand sync:', err);
-  }
-  next();
-});
+
 
 // Register API Routes on both /api and root (to support direct function invocations and rewrites)
 app.use('/api', apiRoutes);
