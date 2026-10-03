@@ -13,8 +13,10 @@ app.use(express.json());
 // Initialize Database & seed tables if required
 initDatabase();
 
-// Start background auto-sync timer
-syncService.initAutoSync();
+// Start background auto-sync timer for long-running servers
+if (!process.env.VERCEL) {
+  syncService.initAutoSync();
+}
 
 // Health check endpoints (including root '/' for Vercel service probe)
 app.get('/', (req, res) => {

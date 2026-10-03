@@ -34,13 +34,20 @@ class SyncService {
         ]);
     }
     initAutoSync() {
-        setTimeout(() => {
+        if (process.env.VERCEL) {
+            return;
+        }
+        const timer = setTimeout(() => {
             this.syncAll().catch(err => console.error('Initial sync error:', err));
         }, 1000);
+        if (timer.unref)
+            timer.unref();
         const intervalMs = index_1.config.syncIntervalMinutes * 60 * 1000;
         this.intervalTimer = setInterval(() => {
             this.syncAll().catch(err => console.error('Auto sync error:', err));
         }, intervalMs);
+        if (this.intervalTimer.unref)
+            this.intervalTimer.unref();
         console.log(`⏱️ Auto-sync configured to run every ${index_1.config.syncIntervalMinutes} minutes.`);
     }
     async syncAll() {
