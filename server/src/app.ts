@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { config } from './config/index';
 import { initDatabase } from './database/db';
+import { syncService } from './services/sync/syncService';
 import apiRoutes from './routes/api';
 
 const app = express();
@@ -11,6 +12,9 @@ app.use(express.json());
 
 // Initialize Database & seed tables if required
 initDatabase();
+
+// Start background auto-sync timer
+syncService.initAutoSync();
 
 // Health check endpoints (including root '/' for Vercel service probe)
 app.get('/', (req, res) => {
@@ -38,6 +42,19 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
     mode: config.useMockData ? 'mock' : 'live_google_sheets',
   });
+});
+
+// Auto-sync middleware: ensures Google Sheets data is pulled before responding
+app.use(async (req, res, next) => {
+  if (req.path === '/' || req.path === '/health' || req.path === '/api/health') {
+    return next();
+  }
+  try {
+    await syncService.ensureSynced();
+  } catch (err: any) {
+    console.error('Error during on-demand sync:', err);
+  }
+  next();
 });
 
 // Register API Routes on both /api and root (to support direct function invocations and rewrites)

@@ -7,6 +7,27 @@ import { SyncLog } from '../../types/index';
 export class SyncService {
   private isSyncing = false;
   private intervalTimer: NodeJS.Timeout | null = null;
+  private initialSyncPromise: Promise<any> | null = null;
+
+  async ensureSynced(): Promise<void> {
+    const totalRecords = (db.prepare('SELECT COUNT(*) as count FROM attendance_records').get() as any)?.count || 0;
+    if (totalRecords > 0) {
+      return;
+    }
+
+    if (!this.initialSyncPromise) {
+      console.log('🔄 First request received on cold start: syncing live data from Google Sheets...');
+      this.initialSyncPromise = this.syncAll().then(res => {
+        console.log('✅ Cold start sync completed.');
+        return res;
+      }).catch(err => {
+        console.error('❌ Cold start sync error:', err);
+        this.initialSyncPromise = null;
+      });
+    }
+
+    await this.initialSyncPromise;
+  }
 
   initAutoSync() {
     setTimeout(() => {
