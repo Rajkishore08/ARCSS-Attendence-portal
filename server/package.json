@@ -11,12 +11,14 @@
     "inspect": "tsx src/inspect_live.ts"
   },
   "dependencies": {
+    "@types/sql.js": "^1.4.11",
     "better-sqlite3": "^11.8.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "googleapis": "^144.0.0",
-    "node-cron": "^3.0.3"
+    "node-cron": "^3.0.3",
+    "sql.js": "^1.14.2"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",

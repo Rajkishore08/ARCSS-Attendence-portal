@@ -27,5 +27,14 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Global error handler
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('Express Error:', err);
+  res.status(500).json({
+    error: err.message || 'Internal Server Error',
+    timestamp: new Date().toISOString(),
+  });
+});
+
 export default app;
 export { app };
