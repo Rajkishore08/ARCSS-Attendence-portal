@@ -2,7 +2,7 @@
   "name": "arcs-attendance-server",
   "version": "1.0.0",
   "description": "ARCS Attendance Portal Backend",
-  "main": "dist/app.js",
+  "main": "app.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
